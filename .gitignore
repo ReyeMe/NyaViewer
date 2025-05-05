@@ -1,0 +1,4 @@
+[Bb]uild[Dd]rop/**
+VS2022/.vs/**
+VS2022/[Oo]bj/**
+VS2022/*.aps
