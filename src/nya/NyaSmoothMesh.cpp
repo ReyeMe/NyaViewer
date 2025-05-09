@@ -33,18 +33,15 @@ bool NyaSmoothMesh::Open(wxFileInputStream& stream)
 	return false;
 }
 
-void NyaSmoothMesh::Render(GLuint* textures = nullptr)
+void NyaSmoothMesh::RenderQuad(size_t polygon, GLuint* textures)
 {
-	for (size_t polygon = 0; polygon < this->polygonCount; polygon++)
+	NyaVertex normals[4] =
 	{
-		NyaVertex normals[4] =
-		{
 			this->normals[this->polygons[polygon].Points[0]],
 			this->normals[this->polygons[polygon].Points[1]],
 			this->normals[this->polygons[polygon].Points[2]],
 			this->normals[this->polygons[polygon].Points[3]]
-		};
+	};
 
-		this->RenderQuad(polygon, textures, normals);
-	}
+	NyaMesh::RenderQuad(polygon, textures, normals);
 }

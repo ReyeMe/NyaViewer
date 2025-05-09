@@ -1,15 +1,19 @@
 ﻿#pragma once
-#include <wx/wx.h>
-#include <wx/glcanvas.h>
 
 // include OpenGL
 #ifdef __WXMAC__
 #include "OpenGL/glu.h"
 #include "OpenGL/gl.h"
 #else
+#define GLEW_STATIC
+#define GL_GLEXT_PROTOTYPES
+#include <GL/glew.h>
 #include <GL/glu.h>
 #include <GL/gl.h>
 #endif
+
+#include <wx/wx.h>
+#include <wx/glcanvas.h>
 
 // Nya structures
 #include "nya/NyaModel.h"
@@ -30,10 +34,18 @@ class ModelDrawControl : public wxGLCanvas
 		NyaVertex Up;
 	};
 
+	struct Movement
+	{
+		float Forward = 0.0f;
+		float Side = 0.0f;
+		float Rot = 0.0f;
+	};
+
 	bool IsMouseDrag = false;
 
 	wxGLContext* glContext = nullptr;
 
+	Movement modeMovement;
 	Camera modelCamera;
 	NyaModel* model = nullptr;
 

@@ -1,6 +1,18 @@
 #include "NyaModel.h"
 #include "NyaUtils.h"
 
+template<typename T>
+struct RenderTarget
+{
+	T* Mesh;
+	size_t PolygonIdx;
+	float Depth;
+
+	static bool Sorter(RenderTarget<T> const& lhs, RenderTarget<T> const& rhs) {
+		return lhs.Depth > rhs.Depth;
+	}
+};
+
 NyaModel::NyaModel()
 {
 }
@@ -101,6 +113,9 @@ bool NyaModel::Open(wxFileInputStream& stream)
 
 void NyaModel::Render(GLuint* tex = nullptr)
 {
+	glDisable(GL_DEPTH);
+	glDisable(GL_DEPTH_TEST);
+
 	if (this->meshType == MeshType::Flat)
 	{
 		NyaModel::RenderMeshes(this->meshes, this->textures, this->meshCount);
@@ -131,15 +146,39 @@ static bool NyaModel::DeleteMeshes(T** target, size_t count)
 template<typename T>
 static void NyaModel::RenderMeshes(T** target, GLuint* textures, size_t count)
 {
-	static_assert(std::is_base_of<NyaRenderable, T>::value, "Type not supported");
-
 	if (target != nullptr)
 	{
+		size_t polygonCount = 0;
+
 		for (size_t mesh = 0; mesh < count; mesh++)
 		{
-			if (target[mesh] != nullptr)
+			polygonCount += target[mesh]->polygonCount;
+		}
+
+		if (polygonCount > 0)
+		{
+			// Prepare for sort
+			std::vector<RenderTarget<T>> toRender(polygonCount);
+			size_t counter = 0;
+
+			for (size_t mesh = 0; mesh < count; mesh++)
 			{
-				target[mesh]->Render(textures);
+				for (size_t polygonIdx = 0; polygonIdx < target[mesh]->polygonCount; polygonIdx++)
+				{
+					toRender[counter].Mesh = target[mesh];
+					toRender[counter].PolygonIdx = polygonIdx;
+					toRender[counter].Depth = target[mesh]->GetQuadDepth(polygonIdx);
+					counter++;
+				}
+			}
+
+			// Do sort
+			std::sort(toRender.begin(), toRender.end(), &RenderTarget<T>::Sorter);
+
+			// Do render
+			for (const auto& quad : toRender)
+			{
+				quad.Mesh->RenderQuad(quad.PolygonIdx, textures);
 			}
 		}
 	}

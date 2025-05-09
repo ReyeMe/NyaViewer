@@ -12,6 +12,8 @@ private:
 	ModelDrawControl* modelDraw = nullptr;
 
 	void OpenFile(wxCommandEvent &e);
+	void SetShaded(wxCommandEvent& e);
+	void SetWireframe(wxCommandEvent& e);
 
 public:
 	MainWindow();

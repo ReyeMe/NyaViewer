@@ -6,6 +6,10 @@
 class NyaSmoothMesh : public NyaMesh
 {
 public:
+	/** @brief Point normal vectors
+	 */
+	NyaVertex* normals = nullptr;
+
 	NyaSmoothMesh();
 	~NyaSmoothMesh();
 
@@ -14,13 +18,9 @@ public:
 	 */
 	bool Open(wxFileInputStream& stream) override;
 
-	/** @brief Render structure
+	/** @brief Render single quad
+	 * @param polygonIdx Index of the polygon
+	 * @param textures Quad textures
 	 */
-	void Render(GLuint* textures) override;
-
-private:
-
-	/** @brief Point normal vectors
-	 */
-	NyaVertex* normals = nullptr;
+	void RenderQuad(size_t polygonIdx, GLuint* textures);
 };

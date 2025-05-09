@@ -17,6 +17,21 @@ struct NyaColor
     /** @brief Blue component
      */
     float B;
+
+    /** @brief Get complementary color
+     */
+    const NyaColor GetComplementary()
+    {
+        return NyaColor(1.0f - this->R, 1.0f - this->G, 1.0f - this->B);
+    }
+
+    /** @brief Multiplication operator
+     * @param scaler Constant number
+     */
+    const NyaColor operator *(const float scaler)
+    {
+        return NyaColor(this->R * scaler, this->G * scaler, this->B * scaler);
+    }
 };
 
 #pragma pack(push, 1)

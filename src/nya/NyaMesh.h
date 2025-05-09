@@ -5,7 +5,7 @@
 
 /** @brief Flat mesh geometry
  */
-class NyaMesh : public NyaLoadable, NyaRenderable
+class NyaMesh : public NyaLoadable
 {
 public:
 	NyaMesh();
@@ -36,9 +36,16 @@ public:
 	 */
 	bool Open(wxFileInputStream& stream) override;
 
-	/** @brief Render structure
+	/** @brief Render single quad
+	 * @param polygonIdx Index of the polygon
+	 * @param textures Quad textures
 	 */
-	void Render(GLuint* textures) override;
+	void RenderQuad(size_t polygonIdx, GLuint* textures);
+
+	/** Get depth of a quad
+	 * @param polygonIdx Index of the polygon
+	 */
+	float GetQuadDepth(size_t polygonIdx);
 
 protected:
 

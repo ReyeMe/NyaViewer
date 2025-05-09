@@ -42,7 +42,7 @@ public:
 			return this->Z;
 
 		default:
-			static_assert("received negative value");
+			return 1.0f;
 			break;
 		}
 

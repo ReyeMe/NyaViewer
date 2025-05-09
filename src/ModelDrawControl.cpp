@@ -76,14 +76,84 @@ void ModelDrawControl::MouseWheelMoved(wxMouseEvent& event)
 
 void ModelDrawControl::RightClick(wxMouseEvent& event) {}
 void ModelDrawControl::MouseLeftWindow(wxMouseEvent& event) {}
-void ModelDrawControl::KeyPressed(wxKeyEvent& event) {}
-void ModelDrawControl::KeyReleased(wxKeyEvent& event) {}
+
+void ModelDrawControl::KeyPressed(wxKeyEvent& event)
+{
+    if (event.GetKeyCode() == 'W')
+    {
+        modeMovement.Forward = 3.0f;
+        event.Skip();
+    }
+    else if (event.GetKeyCode() == 'S')
+    {
+        modeMovement.Forward = -3.0f;
+        event.Skip();
+    }
+
+    if (event.GetKeyCode() == 'D')
+    {
+        modeMovement.Side = 3.0f;
+        event.Skip();
+    }
+    else if (event.GetKeyCode() == 'A')
+    {
+        modeMovement.Side = -3.0f;
+        event.Skip();
+    }
+
+    if (event.GetKeyCode() == 'E')
+    {
+        modeMovement.Rot = 1.0f;
+        event.Skip();
+    }
+    else if (event.GetKeyCode() == 'Q')
+    {
+        modeMovement.Rot = -1.0f;
+        event.Skip();
+    }
+
+    if (event.GetSkipped())
+    {
+        this->Refresh();
+    }
+}
+
+void ModelDrawControl::KeyReleased(wxKeyEvent& event)
+{
+    if (event.GetKeyCode() == 'W' || event.GetKeyCode() == 'S')
+    {
+        modeMovement.Forward = 0.0f;
+        event.Skip();
+    }
+
+    if (event.GetKeyCode() == 'A' || event.GetKeyCode() == 'D')
+    {
+        modeMovement.Side = 0.0f;
+        event.Skip();
+    }
+
+    if (event.GetKeyCode() == 'Q' || event.GetKeyCode() == 'E')
+    {
+        modeMovement.Rot = 0.0f;
+        event.Skip();
+    }
+}
 
 ModelDrawControl::ModelDrawControl(wxFrame* parent, int* args) :
     wxGLCanvas(parent, wxID_ANY, args, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE)
 {
     this->glContext = new wxGLContext(this);
     this->modelCamera = Camera();
+
+    this->glContext->SetCurrent(*this);
+    GLenum err = glewInit();
+
+    if (GLEW_OK != err)
+    {
+        const auto test = glewGetErrorString(err);
+        /* Problem: glewInit failed, something is seriously wrong. */
+        fprintf(stderr, "Error: %s\n", test);
+    }
 
     // To avoid flashing on MSW
     this->SetBackgroundStyle(wxBG_STYLE_CUSTOM);
@@ -130,7 +200,7 @@ void ModelDrawControl::LoadModel(NyaModel* model)
         const auto radius = min.DistanceTo(max);
 
         this->modelCamera = Camera();
-        this->modelCamera.Position -= this->modelCamera.Direction * radius;
+        this->modelCamera.Position = this->modelCamera.Direction * -radius;
     }
     else
     {
@@ -157,7 +227,7 @@ void ModelDrawControl::Prepare2DViewport(int x, int y, int width, int height)
     glLoadIdentity();
 }
 
-void ModelDrawControl::Prepare3DViewport(int topleft_x, int topleft_y, int bottomrigth_x, int bottomrigth_y)
+void ModelDrawControl::Prepare3DViewport(int x, int y, int width, int height)
 {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClearDepth(1.0f);
@@ -166,12 +236,12 @@ void ModelDrawControl::Prepare3DViewport(int topleft_x, int topleft_y, int botto
     glDepthFunc(GL_LEQUAL); // The Type Of Depth Testing To Do
     glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
-    glViewport(topleft_x, topleft_y, bottomrigth_x - topleft_x, bottomrigth_y - topleft_y);
+    glViewport(x, y, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-    float ratio_w_h = (float)(bottomrigth_x - topleft_x) / (float)(bottomrigth_y - topleft_y);
-    gluPerspective(45 /*view angle*/, ratio_w_h, 0.1 /*clip close*/, 200.0 /*clip far*/);
+    float ratio_w_h = (float)(width) / (float)(height);
+    gluPerspective(45 /*view angle*/, ratio_w_h, 0.1 /*clip close*/, 20000.0 /*clip far*/);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -209,19 +279,27 @@ void ModelDrawControl::MouseLookAt(int dx, int dy)
     mouseY = (float)dy;
 
     // Unproject
-    GLdouble x, y, z;
-    NyaVertex vert;
+    GLdouble x1, y1, z1;
+    GLdouble x2, y2, z2;
+    NyaVertex vert1;
+    NyaVertex vert2;
 
-    gluUnProject(mouseX + (this->GetWidth() / 2), (this->GetHeight() / 2) - mouseY, -0.1f, modelview, projection, viewport, &x, &y, &z);
-    vert.X = (float)x;
-    vert.Y = (float)y;
-    vert.Z = (float)z;
-    vert.Normalize();
+    gluUnProject(mouseX + (this->GetWidth() / 2), (this->GetHeight() / 2), -0.1f, modelview, projection, viewport, &x1, &y1, &z1);
+    gluUnProject(this->GetWidth() / 2, (this->GetHeight() / 2) - mouseY, -0.1f, modelview, projection, viewport, &x2, &y2, &z2);
+    vert1.X = (float)x1;
+    vert1.Y = (float)y1;
+    vert1.Z = (float)z1;
+    vert1.Normalize();
+
+    vert2.X = (float)x2;
+    vert2.Y = (float)y2;
+    vert2.Z = (float)z2;
+    vert2.Normalize();
 
     // Make camera look at point
     auto side = this->modelCamera.Up.Cross(this->modelCamera.Direction).GetNormal();
-    this->modelCamera.Direction = vert;
-    this->modelCamera.Up = vert.Cross(side).GetNormal();
+    this->modelCamera.Direction = ((side * vert1.Dot(side)) + (this->modelCamera.Direction * vert1.Dot(this->modelCamera.Direction)) + vert2).GetNormal();
+    this->modelCamera.Up = this->modelCamera.Direction.Cross(side).GetNormal();
 }
 
 void ModelDrawControl::RenderCursor()
@@ -289,7 +367,15 @@ void ModelDrawControl::Render(wxPaintEvent& evt)
     wxGLCanvas::SetCurrent(*this->glContext);
     wxPaintDC paint(this); // only to be used in paint events. use wxClientDC to paint outside the paint event
 
-    // Draw background
+    NyaVertex side = this->modelCamera.Direction.Cross(this->modelCamera.Up).GetNormal();
+    this->modelCamera.Position += this->modelCamera.Direction * this->modeMovement.Forward;
+    this->modelCamera.Position += side * this->modeMovement.Side;
+
+    if (std::abs(this->modeMovement.Rot) > 0.1f)
+    {
+        this->modelCamera.Up = ((side * std::sin(this->modeMovement.Rot / 50.0f)) + (this->modelCamera.Up * std::cos(this->modeMovement.Rot / 50.0f))).GetNormal();
+    }
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     this->Prepare2DViewport(0, 0, this->GetWidth(), this->GetHeight());
 
@@ -303,9 +389,8 @@ void ModelDrawControl::Render(wxPaintEvent& evt)
     glVertex3f(1.0f, -1.0f, 0.0f);
     glEnd();
 
-    // Draw model
-    glClear(GL_DEPTH_BUFFER_BIT);
     this->Prepare3DViewport(0, 0, this->GetWidth(), this->GetHeight());
+    glClear(GL_DEPTH_BUFFER_BIT);
 
     glEnable(GL_ALPHA_TEST);
     glEnable(GL_TEXTURE_2D);
@@ -337,4 +422,11 @@ void ModelDrawControl::Render(wxPaintEvent& evt)
 
     glFlush();
     SwapBuffers();
+
+    if (std::abs(this->modeMovement.Forward) > 0.1f ||
+        std::abs(this->modeMovement.Side) > 0.1f ||
+        std::abs(this->modeMovement.Rot) > 0.1f)
+    {
+        this->Refresh();
+    }
 }
