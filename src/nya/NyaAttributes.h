@@ -90,7 +90,7 @@ public:
 
     /** @brief Index of a texture to use if HasTexture field is true
      */
-    size_t Texture;
+    uint32_t Texture;
 
     /** @brief Read structure from stream
      * @param stream Data stream

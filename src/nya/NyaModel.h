@@ -10,7 +10,7 @@ public:
 
 	/** @brief Type of a mesh stored within model
 	 */
-	enum class MeshType : size_t
+	enum class MeshType : uint32_t
 	{
 		/** Flat shaded mesh
 		 */
@@ -23,11 +23,11 @@ public:
 
 	/** @brief Number of meshes in group
 	 */
-	size_t meshCount = 0;
+	uint32_t meshCount = 0;
 
 	/** @brief Number of textures in group
 	 */
-	size_t textureCount = 0;
+	uint32_t textureCount = 0;
 
 	/** @brief array of loaded textures
 	 */
