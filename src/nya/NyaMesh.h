@@ -13,11 +13,11 @@ public:
 
 	/** @brief Mesh point count
 	 */
-	size_t pointCount = 0;
+	uint32_t pointCount = 0;
 
 	/** @brief Mesh polygon count
 	 */
-	size_t polygonCount = 0;
+	uint32_t polygonCount = 0;
 
 	/** @brief Mesh points
 	 */

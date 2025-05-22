@@ -1,11 +1,10 @@
-﻿#pragma once
+#pragma once
 
 // include OpenGL
 #ifdef __WXMAC__
 #include "OpenGL/glu.h"
 #include "OpenGL/gl.h"
 #else
-#define GLEW_STATIC
 #define GL_GLEXT_PROTOTYPES
 #include <GL/glew.h>
 #include <GL/glu.h>
